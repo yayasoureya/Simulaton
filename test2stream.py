@@ -7,74 +7,72 @@ import matplotlib.pyplot as plt
 import streamlit as st
 import matplotlib
 
-matplotlib.use('Agg')  # Utiliser le backend non interactif
+matplotlib.use('Agg')  # Use the non-interactive backend
 
-# Fonction pour afficher les graphiques SHAP dans Streamlit
+# Function to display SHAP plots in Streamlit
 def show_shap_plot(plot_function, *args, **kwargs):
     fig, ax = plt.subplots()
-    plot_function(*args, show=False, **kwargs)  # Générer le graphique SHAP
-    st.pyplot(fig)  # Afficher le graphique dans Streamlit
+    plot_function(*args, show=False, **kwargs)  # Generate the SHAP plot
+    st.pyplot(fig)  # Display the plot in Streamlit
 
-# 1. Simulation des données
+# 1. Data simulation
 np.random.seed(42)
 n_samples = 1000
-n_features = 7  # Capteurs : température, mouvement, luminosité, etc.
+n_features = 7  # Sensors: temperature, motion, brightness, etc.
 
-# Générer les données capteurs
-X = np.random.rand(n_samples, n_features) * 10  # Capteurs avec valeurs entre 0 et 10
-y = np.random.choice(['Lumière ON', 'Lumière OFF', 'Ouvrir Porte', 'Rien', 'Allumer Clim', 'Éteindre Clim'], size=n_samples)
+# Generate sensor data
+X = np.random.rand(n_samples, n_features) * 10  # Sensors with values between 0 and 10
+y = np.random.choice(['Light ON', 'Light OFF', 'Open Door', 'Nothing', 'Turn ON AC', 'Turn OFF AC'], size=n_samples)
 
-# Convertir en DataFrame avec de nouveaux capteurs
-columns = ['Capteur_Température', 'Capteur_Mouvement', 'Capteur_Luminosité', 'Capteur_Humidité', 'Capteur_Son', 'Capteur_Présence_Salon', 'Capteur_Présence_Chambre']
+# Convert to DataFrame with new sensors
+columns = ['Sensor_Temperature', 'Sensor_Motion', 'Sensor_Brightness', 'Sensor_Humidity', 'Sensor_Sound', 'Sensor_LivingRoom_Presence', 'Sensor_Bedroom_Presence']
 df = pd.DataFrame(X, columns=columns)
 df['Action'] = y
 
-# Ajout d'une estimation de la présence dans chaque pièce (Salon vs Chambre)
-df['Time_in_Salon'] = np.random.rand(n_samples) * 10  # Temps estimé passé dans le salon (en minutes)
-df['Time_in_Chambre'] = np.random.rand(n_samples) * 10  # Temps estimé passé dans la chambre (en minutes)
+# Add an estimate of presence in each room (Living Room vs Bedroom)
+df['Time_in_LivingRoom'] = np.random.rand(n_samples) * 10  # Estimated time spent in the living room (in minutes)
+df['Time_in_Bedroom'] = np.random.rand(n_samples) * 10  # Estimated time spent in the bedroom (in minutes)
 
-# Diviser les données en train/test
-X_train, X_test, y_train, y_test = train_test_split(df[columns + ['Time_in_Salon', 'Time_in_Chambre']], df['Action'], test_size=0.2, random_state=0)
+# Split the data into train/test
+X_train, X_test, y_train, y_test = train_test_split(df[columns + ['Time_in_LivingRoom', 'Time_in_Bedroom']], df['Action'], test_size=0.2, random_state=0)
 
-# 2. Entraîner un modèle
+# 2. Train a model
 model = RandomForestClassifier(n_estimators=100, random_state=42)
 model.fit(X_train, y_train)
 
-# 3. Prédire sur les nouvelles données
+# 3. Predict on new data
 predictions = model.predict(X_test)
 
-# Affichage des prédictions
-st.write(f"Prédictions : {predictions[:5]}")
+# Display predictions
+st.write(f"Predictions: {predictions[:5]}")
 
-# 4. Interprétation avec SHAP
+# 4. Interpretation with SHAP
 explainer = shap.TreeExplainer(model)
 #X_test_limited = X_test.iloc[:, :6]
 shap_values = explainer.shap_values(X_test)
 
-# Visualisation globale : importance des caractéristiques
-st.write("### Importance des caractéristiques")
-# Vérifier le nombre de classes dans shap_values
-st.write(f"Nombre de classes SHAP : {len(shap_values)}")
+# Global visualization: feature importance
+st.write("### Feature Importance")
+# Check the number of classes in shap_values
+st.write(f"Number of SHAP classes: {len(shap_values)}")
 
-# Vérifier la cohérence entre columns et X_test
-# Inclure les colonnes supplémentaires dans la vérification
-expected_columns = columns + ['Time_in_Salon', 'Time_in_Chambre']
-assert len(expected_columns) == X_test.shape[1], "Les noms de colonnes et les données ne correspondent pas."
+# Verify consistency between columns and X_test
+# Include the additional columns in the check
+expected_columns = columns + ['Time_in_LivingRoom', 'Time_in_Bedroom']
+assert len(expected_columns) == X_test.shape[1], "Column names and data do not match."
 
-
-# Correction du plot SHAP (choisir une classe existante, par exemple 0)
-# Visualisation SHAP : inclure les colonnes supplémentaires
+# Fix SHAP plot (choose an existing class, e.g., 0)
+# SHAP visualization: include additional columns
 shap.summary_plot(shap_values[1], X_test[expected_columns], feature_names=expected_columns)
 show_shap_plot(shap.summary_plot, shap_values[1], X_test[expected_columns], feature_names=expected_columns)
 
+# Local visualization: explanation for a specific sample
+# Check the dimensions of shap_values and X_test
+assert shap_values[0].shape[1] == len(expected_columns), "Mismatch between SHAP values and columns."
 
-# Visualisation locale : explication pour un échantillon spécifique
-# Vérifiez les dimensions de shap_values et X_test
-assert shap_values[0].shape[1] == len(expected_columns), "Incohérence entre SHAP values et les colonnes."
-
-# Gestion de la taille des SHAP values
+# Handle SHAP values size
 if shap_values[0].shape[1] != len(expected_columns):
-    st.warning("Les SHAP values générées ne correspondent pas au nombre attendu de colonnes.")
+    st.warning("Generated SHAP values do not match the expected number of columns.")
     explanation = shap.Explanation(
         shap_values[0][0][:len(expected_columns)],
         base_values=explainer.expected_value[0],
@@ -89,68 +87,68 @@ else:
         feature_names=expected_columns
     )
 
-st.write("### Explication locale pour un échantillon spécifique")
-# Convertir base_values en float, si nécessaire
+st.write("### Local Explanation for a Specific Sample")
+# Convert base_values to float, if necessary
 if isinstance(explanation.base_values, pd.Series):
     explanation.base_values = float(explanation.base_values.iloc[0])
     
 shap.plots.waterfall(explanation)
 show_shap_plot(shap.plots.waterfall, explanation)
 
-# 5. Diagramme en courbes (variations des capteurs)
-st.write("### Variation des capteurs au fil du temps")
+# 5. Line chart (sensor variations)
+st.write("### Sensor Variations Over Time")
 plt.figure(figsize=(10, 6))
 for i, column in enumerate(columns):
     plt.plot(df.index[:100], df[column][:100], label=column)
-plt.title('Variation des capteurs au fil du temps')
+plt.title('Sensor Variations Over Time')
 plt.xlabel('Index')
-plt.ylabel('Valeur des capteurs')
+plt.ylabel('Sensor Values')
 plt.legend(loc='upper right')
 plt.grid(True)
 st.pyplot(plt)
 
-# 6. Diagramme circulaire : Répartition des valeurs des capteurs
-st.write("### Répartition des valeurs moyennes des capteurs")
+# 6. Pie chart: Distribution of sensor values
+st.write("### Distribution of Average Sensor Values")
 plt.figure(figsize=(7, 7))
 sensor_means = df[columns].mean()
 plt.pie(sensor_means, labels=sensor_means.index, autopct='%1.1f%%', startangle=90)
-plt.title('Répartition des valeurs moyennes des capteurs')
-plt.axis('equal')  # Pour un cercle parfait
+plt.title('Distribution of Average Sensor Values')
+plt.axis('equal')  # For a perfect circle
 st.pyplot(plt)
 
-# 7. Diagramme des prédictions futures
-st.write("### Prédictions futures au fil du temps")
-future_predictions = model.predict(X_test[:100])  # Prédictions sur les 100 premiers échantillons
+# 7. Future predictions chart
+st.write("### Future Predictions Over Time")
+future_predictions = model.predict(X_test[:100])  # Predictions on the first 100 samples
 plt.figure(figsize=(10, 6))
-plt.plot(np.arange(100), future_predictions, marker='o', linestyle='-', color='b', label='Prédictions')
-plt.title('Prédictions futures au fil du temps')
+plt.plot(np.arange(100), future_predictions, marker='o', linestyle='-', color='b', label='Predictions')
+plt.title('Future Predictions Over Time')
 plt.xlabel('Index')
-plt.ylabel('Prédiction')
+plt.ylabel('Prediction')
 plt.legend(loc='upper left')
 plt.grid(True)
 st.pyplot(plt)
 
-# 8. Résumé psychologique de l'utilisateur
+# 8. User psychological summary
 def generate_psychological_profile(df):
     profile = []
     
-    if df['Capteur_Température'].mean() > 20:
-        profile.append("Utilisateur préfère des températures inférieures à 20°C.")
+    if df['Sensor_Temperature'].mean() > 20:
+        profile.append("User prefers temperatures below 20°C.")
     else:
-        profile.append("Utilisateur préfère des températures supérieures à 20°C.")
+        profile.append("User prefers temperatures above 20°C.")
     
-    if df['Capteur_Présence_Salon'].mean() < df['Capteur_Présence_Chambre'].mean():
-        profile.append("Utilisateur préfère passer du temps dans la chambre.")
+    if df['Sensor_LivingRoom_Presence'].mean() < df['Sensor_Bedroom_Presence'].mean():
+        profile.append("User prefers spending time in the bedroom.")
     else:
-        profile.append("Utilisateur préfère passer du temps dans le salon.")
+        profile.append("User prefers spending time in the living room.")
     
-    if df['Capteur_Luminosité'].mean() < 5:
-        profile.append("Utilisateur préfère rester dans l'obscurité plutôt que dans la lumière.")
+    if df['Sensor_Brightness'].mean() < 5:
+        profile.append("User prefers staying in darkness rather than light.")
     else:
-        profile.append("Utilisateur préfère des environnements lumineux.")
+        profile.append("User prefers bright environments.")
     
     return " ".join(profile)
 
 profile = generate_psychological_profile(df)
-st.write("### Profil psychologique de l'utilisateur")
+st.write("### User Psychological Profile")
 st.write(profile)
