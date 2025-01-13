@@ -44,7 +44,7 @@ The project requires **Python 3.9.0**. Please follow the instructions below to d
 Clone the repository to your local machine:
 
 ```bash
-git clone https://github.com/GuiGui2401/HomeActionPredict.git
+git clone https://yayasoureya/Simulaton/HomeActionPredict.git
 cd HomeActionPredict
 ```
 
@@ -96,13 +96,13 @@ streamlit run test2stream.py
 
 ### Reporting Issues
 
-If you encounter any issues or have suggestions, please submit them via the [GitHub Issues page](https://github.com/GuiGui2401/HomeActionPredict/issues).
+If you encounter any issues or have suggestions, please submit them via the [GitHub Issues page](https://github.com/yayasoureya/Simulaton/issues).
 
 ### Contact
 
 For further inquiries, you can reach us at:
 
-- **Email**: [jguiyo@gmail.com](mailto\:jguiyo@gmail.com)
+- **Email**: [yayasoureya19@gmail.com](mailto\:yayasoureya19@gmail.com)
 
 ---
 
@@ -110,7 +110,7 @@ For further inquiries, you can reach us at:
 
 Special thanks to:
 
-- **Soureya Yaya** for leading this project.
+- **Soureya Yaya** for leading this project and technical support ([GitHub Profile](https://github.com/yayasoureya)).
 - **GuiGui2401** for technical support and contributions ([GitHub Profile](https://github.com/GuiGui2401)).
 
 ---
